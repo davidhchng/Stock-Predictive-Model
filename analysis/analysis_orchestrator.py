@@ -42,9 +42,13 @@ class AnalysisOrchestrator:
             # Get stock data
             stock_data = self.db_manager.get_stock_data(ticker, start_date, end_date)
             
-            if stock_data.empty:
+            if stock_data is None or stock_data.empty:
                 logger.error(f"No data found for {ticker}")
                 return {'error': f'No data found for {ticker}'}
+            
+            # Ensure the index is datetime
+            if not isinstance(stock_data.index, pd.DatetimeIndex):
+                stock_data.index = pd.to_datetime(stock_data.index)
             
             # Perform technical analysis
             technical_analysis = self._perform_technical_analysis(stock_data)
@@ -94,7 +98,7 @@ class AnalysisOrchestrator:
             
             # Get latest trend signal
             latest_trend = {}
-            if not trend_signals:
+            if not trend_signals.empty:
                 latest_trend = trend_signals.iloc[-1].to_dict()
             
             return {
@@ -247,8 +251,12 @@ class AnalysisOrchestrator:
             
             stock_data = self.db_manager.get_stock_data(ticker, start_date, end_date)
             
-            if stock_data.empty:
+            if stock_data is None or stock_data.empty:
                 return {'error': f'No data found for {ticker}'}
+            
+            # Ensure the index is datetime
+            if not isinstance(stock_data.index, pd.DatetimeIndex):
+                stock_data.index = pd.to_datetime(stock_data.index)
             
             tech_calc = TechnicalIndicators(stock_data)
             technical_summary = tech_calc.get_technical_summary()
@@ -258,6 +266,13 @@ class AnalysisOrchestrator:
             price_change = (stock_data['Close'].iloc[-1] - stock_data['Close'].iloc[0]) / stock_data['Close'].iloc[0]
             volatility = stock_data['Close'].pct_change().std()
             
+            # Handle trend_signals properly
+            trend_signals_dict = {}
+            if hasattr(trend_signals, 'empty') and not trend_signals.empty:
+                trend_signals_dict = trend_signals.iloc[-1].to_dict()
+            elif isinstance(trend_signals, dict):
+                trend_signals_dict = trend_signals
+            
             return {
                 'ticker': ticker,
                 'period_days': period_days,
@@ -265,7 +280,7 @@ class AnalysisOrchestrator:
                 'volatility': volatility,
                 'trend_strength': 'strong' if abs(price_change) > 0.2 else 'moderate' if abs(price_change) > 0.1 else 'weak',
                 'technical_indicators': technical_summary,
-                'trend_signals': trend_signals.iloc[-1].to_dict() if not trend_signals.empty else {}
+                'trend_signals': trend_signals_dict
             }
             
         except Exception as e:
@@ -277,8 +292,12 @@ class AnalysisOrchestrator:
         try:
             stock_data = self.db_manager.get_stock_data(ticker)
             
-            if stock_data.empty:
+            if stock_data is None or stock_data.empty:
                 return {'error': f'No data found for {ticker}'}
+            
+            # Ensure the index is datetime
+            if not isinstance(stock_data.index, pd.DatetimeIndex):
+                stock_data.index = pd.to_datetime(stock_data.index)
             
             return analyze_seasonality(stock_data)
             
@@ -291,8 +310,12 @@ class AnalysisOrchestrator:
         try:
             stock_data = self.db_manager.get_stock_data(ticker)
             
-            if stock_data.empty:
+            if stock_data is None or stock_data.empty:
                 return {'error': f'No data found for {ticker}'}
+            
+            # Ensure the index is datetime
+            if not isinstance(stock_data.index, pd.DatetimeIndex):
+                stock_data.index = pd.to_datetime(stock_data.index)
             
             if len(stock_data) < 100:
                 return {'error': 'Insufficient data for prediction (need at least 100 days)'}

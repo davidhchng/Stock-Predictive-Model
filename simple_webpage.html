@@ -3,23 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S&P 500 Stock Analysis Tool</title>
+    <title>Stack King - S&P 500 Analysis</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #0a0a0a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            font-weight: 900;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 0, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 0, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 150, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: colorShift 10s ease-in-out infinite;
+        }
+        
+        @keyframes colorShift {
+            0%, 100% { 
+                background: 
+                    radial-gradient(circle at 20% 80%, rgba(0, 255, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 0, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(0, 150, 255, 0.05) 0%, transparent 50%);
+            }
+            33% { 
+                background: 
+                    radial-gradient(circle at 80% 20%, rgba(0, 255, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 80%, rgba(255, 0, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 20% 50%, rgba(0, 150, 255, 0.05) 0%, transparent 50%);
+            }
+            66% { 
+                background: 
+                    radial-gradient(circle at 50% 20%, rgba(0, 255, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 20% 50%, rgba(255, 0, 0, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(0, 150, 255, 0.05) 0%, transparent 50%);
+            }
         }
         .header {
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            color: #000;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.3);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            font-weight: 700;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
         }
         .container {
             display: grid;
@@ -28,116 +86,563 @@
             margin-bottom: 20px;
         }
         .card {
-            background: white;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 4px 16px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.4),
+                0 6px 20px rgba(255, 255, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #ffffff;
+            font-size: 1.4em;
+            font-weight: 900;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        
+        /* Start Screen Styles */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .start-logo {
+            font-size: 4em;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            animation: glow 2s ease-in-out infinite alternate;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 0.8em;
+            font-weight: 900;
+            color: #00ff00;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            padding: 8px 12px;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        
+        .start-subtitle {
+            font-size: 1.5em;
+            color: #cccccc;
+            margin-bottom: 20px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        
+        .start-motto {
+            font-size: 1.1em;
+            color: #00ff00;
+            margin-bottom: 40px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .start-button {
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.5em;
+            font-weight: bold;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .start-button:hover {
+            background: linear-gradient(135deg, #00cc00 0%, #009900 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.5);
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(0, 255, 0, 0.3); }
+        }
+        
+        .main-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .main-content.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        /* Main Page Header */
+        .main-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        
+        .main-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .main-logo-icon {
+            font-size: 1.2em;
+            font-weight: 900;
+            color: #00ff00;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            padding: 10px 15px;
+            border: 2px solid #00ff00;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .main-logo-text {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #ffffff;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .main-subtitle {
+            font-size: 1.2em;
+            color: #cccccc;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            font-weight: 400;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .search-box {
             width: 100%;
-            padding: 15px;
+            padding: 18px 20px;
             font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
             margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ffffff;
+            font-weight: bold;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
         }
         .btn {
-            background: #667eea;
-            color: white;
-            padding: 12px 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            color: #000;
+            padding: 15px 30px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
-            margin: 5px;
+            font-weight: bold;
+            margin: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
         }
+        
         .btn:hover {
-            background: #5a6fd8;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
         }
         .prediction {
             text-align: center;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 20px;
             margin: 10px 0;
+            font-weight: 900;
+            font-size: 1.2em;
+            position: relative;
+            overflow: hidden;
         }
-        .bullish { background: #d4edda; color: #155724; }
-        .bearish { background: #f8d7da; color: #721c24; }
-        .neutral { background: #fff3cd; color: #856404; }
+        .buy { 
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.3) 0%, rgba(0, 200, 0, 0.3) 100%);
+            color: #00ff00;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        }
+        .sell { 
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.3) 0%, rgba(200, 0, 0, 0.3) 100%);
+            color: #ff0000;
+            border: 3px solid #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        }
+        .hold { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(200, 200, 200, 0.2) 100%);
+            color: #ffffff;
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+        .signal-text {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        .confidence-level {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        .signal-recap {
+            font-size: 0.9em;
+            opacity: 0.8;
+            line-height: 1.4;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
         .loading {
             text-align: center;
-            color: #666;
+            color: #ffffff;
             font-style: italic;
+            font-weight: bold;
+            position: relative;
+            padding: 20px;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #00ff00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            100% { transform: translateX(-50%) rotate(360deg); }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00cc00, #009900);
         }
         .error {
-            background: #f8d7da;
-            color: #721c24;
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
             padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
+            border: 2px solid #ff0000;
+            font-weight: bold;
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #00ff00;
+            font-weight: bold;
         }
         .chart-container {
-            height: 400px;
-            margin: 20px 0;
+            height: 450px;
+            margin: 25px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
+        .stock-selector {
+            margin-top: 15px;
+        }
+        
         .ticker-list {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
+        
         .ticker-item {
-            padding: 8px;
+            padding: 12px 15px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            font-weight: bold;
+            color: #ffffff;
         }
+        
         .ticker-item:hover {
-            background: #f0f0f0;
+            background: rgba(0, 255, 0, 0.1);
+            border-color: rgba(0, 255, 0, 0.3);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+        }
+        
+        .ticker-item:active {
+            transform: translateX(2px);
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            font-weight: bold;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #00ff00;
+        }
+        .metric-value {
+            color: #ffffff;
+        }
+        .stock-info {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+        }
+        .stock-info h4 {
+            margin-top: 0;
+            color: #00ff00;
+            font-size: 1.2em;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📊 S&P 500 Stock Analysis Tool</h1>
-        <p>Real-time stock analysis with AI predictions and technical indicators</p>
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-logo">
+            <div class="logo-icon">SK</div>
+            STOCK KING
+        </div>
+        <div class="start-subtitle">S&P 500 Analysis & Trading Signals</div>
+        <div class="start-motto">From newbie to veteran: Investing insights made easy.</div>
+        <button class="start-button" onclick="startApp()">START TRADING</button>
     </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Main Page Header with Logo -->
+        <div class="main-header">
+            <div class="main-logo">
+                <div class="main-logo-icon">SK</div>
+                <div class="main-logo-text">STOCK KING</div>
+            </div>
+            <div class="main-subtitle">S&P 500 Analysis & Trading Signals</div>
+        </div>
 
     <div class="container">
         <div class="card">
-            <h3>🔍 Search Stocks</h3>
-            <input type="text" id="searchInput" class="search-box" placeholder="Type ticker symbol (e.g., AAPL, MSFT, GOOGL)">
-            <button class="btn" onclick="searchStock()">Analyze Stock</button>
-            <button class="btn" onclick="loadTickers()">Load S&P 500 List</button>
+            <h3>SEARCH S&P 500 STOCK</h3>
+            <input type="text" id="searchInput" class="search-box" placeholder="Type S&P 500 ticker symbol (e.g., AAPL, MSFT, GOOGL)">
+            <button class="btn" onclick="searchStock()">ANALYZE S&P 500 STOCK</button>
             
-            <div id="tickerList" class="ticker-list" style="display: none;">
-                <h4>Select a ticker:</h4>
-                <div id="tickerOptions"></div>
+            <div class="stock-selector">
+                <div class="ticker-list" id="tickerList">
+                    <div class="ticker-item" onclick="selectTicker('AAPL')">AAPL - Apple Inc.</div>
+                    <div class="ticker-item" onclick="selectTicker('MSFT')">MSFT - Microsoft Corporation</div>
+                    <div class="ticker-item" onclick="selectTicker('GOOGL')">GOOGL - Alphabet Inc.</div>
+                    <div class="ticker-item" onclick="selectTicker('AMZN')">AMZN - Amazon.com Inc.</div>
+                    <div class="ticker-item" onclick="selectTicker('TSLA')">TSLA - Tesla Inc.</div>
+                    <div class="ticker-item" onclick="selectTicker('META')">META - Meta Platforms Inc.</div>
+                    <div class="ticker-item" onclick="selectTicker('NVDA')">NVDA - NVIDIA Corporation</div>
+                    <div class="ticker-item" onclick="selectTicker('JPM')">JPM - JPMorgan Chase & Co.</div>
+                    <div class="ticker-item" onclick="selectTicker('JNJ')">JNJ - Johnson & Johnson</div>
+                    <div class="ticker-item" onclick="selectTicker('V')">V - Visa Inc.</div>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <h3>🤖 AI Prediction</h3>
-            <div id="prediction" class="prediction neutral">
-                Select a stock to see AI prediction
-            </div>
-        </div>
+                <div class="card">
+                    <h3>INVESTMENT SIGNAL</h3>
+                    <div id="prediction" class="prediction hold">
+                        <div class="signal-text">HOLD</div>
+                        <div class="confidence-level">Confidence: N/A (0%)</div>
+                        <div class="signal-recap">Select a stock to see investment signal</div>
+                    </div>
+                </div>
     </div>
 
     <div class="card">
-        <h3>📈 Price Chart</h3>
+        <h3>PRICE CHART</h3>
+        <div style="margin-bottom: 15px;">
+            <button class="btn" onclick="updateChartPeriod('1d')">1 Day</button>
+            <button class="btn" onclick="updateChartPeriod('5d')">5 Days</button>
+            <button class="btn" onclick="updateChartPeriod('1m')">1 Month</button>
+            <button class="btn" onclick="updateChartPeriod('3m')">3 Months</button>
+            <button class="btn" onclick="updateChartPeriod('1y')">1 Year</button>
+            <button class="btn" onclick="updateChartPeriod('all')">All Time</button>
+        </div>
         <div id="chart" class="chart-container"></div>
     </div>
 
     <div class="card">
-        <h3>📊 Technical Analysis</h3>
+        <h3>TECHNICAL ANALYSIS</h3>
         <div id="technicalAnalysis">
             <p class="loading">Select a stock to view technical analysis</p>
         </div>
     </div>
+    </div>
 
     <script>
+        // Start app function
+        function startApp() {
+            const startScreen = document.getElementById('startScreen');
+            const mainContent = document.getElementById('mainContent');
+            
+            startScreen.classList.add('hidden');
+            mainContent.classList.add('visible');
+        }
+        
+        // Select ticker function
+        function selectTicker(ticker) {
+            currentTicker = ticker;
+            showLoading();
+            
+            // Update the search input for display
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = ticker;
+            }
+            
+            // Search for the stock data
+            searchStockData(ticker);
+        }
+        
+        // Search stock data function
+        async function searchStockData(ticker) {
+            try {
+                const response = await fetch(`${API_BASE}/stocks/${ticker}/data`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Failed to fetch data for ${ticker}`);
+                }
+                const stockData = await response.json();
+                
+                if (stockData.length === 0) {
+                    showError(`No data available for ${ticker}. Please try another ticker.`);
+                    return;
+                }
+
+                currentData = stockData; // Store full data for period filtering
+                updateChart(currentData); // Initial chart update with 'all' period
+
+                // Calculate basic analysis for prediction and summary
+                updateBasicAnalysis(stockData);
+
+            } catch (error) {
+                showError(`Error analyzing ${ticker}: ${error.message}`);
+            }
+        }
         const API_BASE = 'http://localhost:8000';
         let currentTicker = null;
+        let currentData = null;
+        let currentPeriod = 'all';
 
         // Load S&P 500 tickers
         async function loadTickers() {
@@ -185,31 +690,81 @@
                 }
                 const stockData = await dataResponse.json();
 
-                // Get prediction
-                const predictionResponse = await fetch(`${API_BASE}/prediction/${ticker}`);
-                const prediction = await predictionResponse.json();
-
-                // Get technical analysis
-                const techResponse = await fetch(`${API_BASE}/analysis/${ticker}/technical`);
-                const technical = await techResponse.json();
-
-                // Update UI
+                // Update UI with basic analysis
                 updateChart(stockData);
-                updatePrediction(prediction);
-                updateTechnicalAnalysis(technical);
+                updateBasicAnalysis(stockData);
 
             } catch (error) {
                 showError(`Error analyzing ${ticker}: ${error.message}`);
             }
         }
 
+        // Update chart period
+        function updateChartPeriod(period) {
+            currentPeriod = period;
+            if (currentData) {
+                updateChart(currentData);
+            }
+        }
+
+        // Filter data based on period
+        function filterDataByPeriod(data, period) {
+            if (!data || data.length === 0) return data;
+            
+            if (period === 'all') {
+                return data;
+            }
+            
+            // Sort data by date to ensure we have the most recent data
+            const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let daysToKeep;
+            switch (period) {
+                case '1d':
+                    daysToKeep = 1;
+                    break;
+                case '5d':
+                    daysToKeep = 5;
+                    break;
+                case '1m':
+                    daysToKeep = 30;
+                    break;
+                case '3m':
+                    daysToKeep = 90;
+                    break;
+                case '1y':
+                    daysToKeep = 365;
+                    break;
+                default:
+                    return data;
+            }
+            
+            // Return the most recent N days of data
+            return sortedData.slice(0, daysToKeep).reverse();
+        }
+
         // Update price chart
         function updateChart(data) {
+            currentData = data;
             if (!data || data.length === 0) return;
 
-            const dates = data.map(d => d.date);
-            const closes = data.map(d => d.close);
-            const volumes = data.map(d => d.volume);
+            // Filter data based on current period
+            const filteredData = filterDataByPeriod(data, currentPeriod);
+            
+            if (filteredData.length === 0) {
+                document.getElementById('chart').innerHTML = '<p class="loading">No data available for selected period.</p>';
+                return;
+            }
+
+            const dates = filteredData.map(d => d.date);
+            const closes = filteredData.map(d => d.close);
+            const volumes = filteredData.map(d => d.volume);
+
+            // Calculate price changes for color coding
+            const priceChanges = closes.map((close, i) => {
+                if (i === 0) return 0;
+                return ((close - closes[i-1]) / closes[i-1]) * 100;
+            });
 
             const trace1 = {
                 x: dates,
@@ -217,7 +772,7 @@
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Close Price',
-                line: { color: '#667eea', width: 2 }
+                line: { color: '#ffffff', width: 3 }
             };
 
             const trace2 = {
@@ -226,77 +781,383 @@
                 type: 'bar',
                 name: 'Volume',
                 yaxis: 'y2',
-                marker: { color: 'rgba(158,158,158,0.3)' }
+                marker: { 
+                    color: volumes.map((vol, i) => {
+                        if (i === 0) return 'rgba(255, 255, 255, 0.3)';
+                        const change = priceChanges[i];
+                        return change >= 0 ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+                    })
+                }
             };
 
-            const layout = {
-                title: `${currentTicker} - Price Chart`,
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Price ($)' },
-                yaxis2: {
-                    title: 'Volume',
-                    overlaying: 'y',
-                    side: 'right',
-                    showticklabels: false
-                },
-                height: 400
-            };
+                    const layout = {
+                        title: {
+                            text: `${currentTicker} - Price Chart (${currentPeriod.toUpperCase()})`,
+                            font: { color: '#ffffff', size: 18 }
+                        },
+                        xaxis: { 
+                            title: 'Date',
+                            color: '#ffffff',
+                            gridcolor: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        yaxis: { 
+                            title: 'Price ($)',
+                            color: '#ffffff',
+                            gridcolor: 'rgba(255, 255, 255, 0.2)'
+                        },
+                        yaxis2: {
+                            title: 'Volume',
+                            overlaying: 'y',
+                            side: 'right',
+                            showticklabels: false
+                        },
+                        height: 400,
+                        plot_bgcolor: 'rgba(0, 0, 0, 0.8)',
+                        paper_bgcolor: 'rgba(0, 0, 0, 0.5)',
+                        font: { color: '#ffffff' }
+                    };
 
             Plotly.newPlot('chart', [trace1, trace2], layout);
         }
 
-        // Update prediction display
-        function updatePrediction(prediction) {
-            const predictionDiv = document.getElementById('prediction');
+        // Update basic analysis
+        function updateBasicAnalysis(data) {
+            if (!data || data.length === 0) return;
+
+            const latest = data[data.length - 1];
+            const previous = data[data.length - 2];
+            const dailyReturn = ((latest.close - previous.close) / previous.close * 100).toFixed(2);
             
-            if (prediction.error) {
-                predictionDiv.className = 'prediction error';
-                predictionDiv.innerHTML = `Error: ${prediction.error}`;
-                return;
+            // Calculate simple moving averages
+            const ma20 = data.slice(-20).reduce((sum, d) => sum + d.close, 0) / 20;
+            const ma50 = data.slice(-50).reduce((sum, d) => sum + d.close, 0) / 50;
+            
+            // Calculate volatility (20-day)
+            const returns = [];
+            for (let i = data.length - 20; i < data.length - 1; i++) {
+                returns.push((data[i + 1].close - data[i].close) / data[i].close);
+            }
+            const volatility = (Math.sqrt(returns.reduce((sum, r) => sum + r * r, 0) / returns.length) * 100).toFixed(2);
+            
+            // Simple RSI calculation
+            let gains = 0, losses = 0;
+            for (let i = data.length - 14; i < data.length - 1; i++) {
+                const change = data[i + 1].close - data[i].close;
+                if (change > 0) gains += change;
+                else losses -= change;
+            }
+            const rsi = gains + losses === 0 ? 50 : (100 - (100 / (1 + gains / losses))).toFixed(1);
+
+            // Generate comprehensive investment analysis
+            let prediction = 'neutral';
+            let confidence = 'medium';
+            let probability = 50;
+            let analysis = [];
+            let riskFactors = [];
+            let opportunities = [];
+            let quantitativeMetrics = {};
+
+            // RSI Analysis
+            quantitativeMetrics.rsi = parseFloat(rsi);
+            if (parseFloat(rsi) < 30) {
+                prediction = 'buy';
+                confidence = 'high';
+                probability = 75;
+                analysis.push(`RSI at ${rsi} indicates oversold conditions - strong buying signal`);
+                opportunities.push(`RSI ${rsi} suggests stock is oversold and may rebound`);
+            } else if (parseFloat(rsi) > 70) {
+                prediction = 'sell';
+                confidence = 'high';
+                probability = 75;
+                analysis.push(`RSI at ${rsi} indicates overbought conditions - strong selling signal`);
+                riskFactors.push(`RSI ${rsi} suggests stock is overbought and may decline`);
+            } else {
+                analysis.push(`RSI at ${rsi} in neutral zone - no extreme momentum signals`);
             }
 
-            const pred = prediction.prediction || 'neutral';
-            const prob = (prediction.probability * 100).toFixed(1);
-            const confidence = prediction.confidence || 'medium';
+            // Moving Average Analysis
+            quantitativeMetrics.ma20 = ma20;
+            quantitativeMetrics.ma50 = ma50;
+            quantitativeMetrics.price_vs_ma20 = ((latest.close - ma20) / ma20 * 100).toFixed(2);
+            quantitativeMetrics.price_vs_ma50 = ((latest.close - ma50) / ma50 * 100).toFixed(2);
+            
+            if (latest.close > ma20 && ma20 > ma50) {
+                if (prediction !== 'sell') {
+                    prediction = 'buy';
+                    confidence = 'medium';
+                    probability = 65;
+                }
+                analysis.push(`Price $${latest.close.toFixed(2)} above MA20 $${ma20.toFixed(2)} and MA50 $${ma50.toFixed(2)} - uptrend confirmed`);
+                opportunities.push(`Price ${quantitativeMetrics.price_vs_ma20}% above 20-day average - strong momentum`);
+            } else if (latest.close < ma20 && ma20 < ma50) {
+                if (prediction !== 'buy') {
+                    prediction = 'sell';
+                    confidence = 'medium';
+                    probability = 65;
+                }
+                analysis.push(`Price $${latest.close.toFixed(2)} below MA20 $${ma20.toFixed(2)} and MA50 $${ma50.toFixed(2)} - downtrend confirmed`);
+                riskFactors.push(`Price ${quantitativeMetrics.price_vs_ma20}% below 20-day average - weak momentum`);
+            } else {
+                analysis.push('Mixed signals from moving averages - trend unclear');
+            }
 
-            predictionDiv.className = `prediction ${pred}`;
-            predictionDiv.innerHTML = `
-                <h3>${pred.toUpperCase()}</h3>
-                <p><strong>Probability:</strong> ${prob}%</p>
-                <p><strong>Confidence:</strong> ${confidence.toUpperCase()}</p>
-                <p><strong>Model:</strong> ${prediction.model_used || 'N/A'}</p>
-            `;
-        }
+            // Volatility Analysis
+            quantitativeMetrics.volatility = parseFloat(volatility);
+            if (parseFloat(volatility) > 3) {
+                riskFactors.push(`High volatility at ${volatility}% indicates increased risk`);
+                analysis.push(`Volatility ${volatility}% - expect significant price swings`);
+            } else if (parseFloat(volatility) < 1) {
+                opportunities.push(`Low volatility at ${volatility}% suggests stable price action`);
+                analysis.push(`Volatility ${volatility}% - stable trading conditions`);
+            } else {
+                analysis.push(`Moderate volatility at ${volatility}% - normal market conditions`);
+            }
 
-        // Update technical analysis
-        function updateTechnicalAnalysis(technical) {
+            // Volume Analysis
+            const avgVolume = data.slice(-20).reduce((sum, d) => sum + d.volume, 0) / 20;
+            const volumeRatio = latest.volume / avgVolume;
+            quantitativeMetrics.volume_ratio = volumeRatio.toFixed(2);
+            quantitativeMetrics.avg_volume = Math.round(avgVolume).toLocaleString();
+            
+            if (volumeRatio > 1.5) {
+                analysis.push(`Volume ${(volumeRatio * 100).toFixed(0)}% above average - strong interest`);
+                if (dailyReturn > 0) {
+                    opportunities.push(`High volume (${(volumeRatio * 100).toFixed(0)}% above avg) with +${dailyReturn}% price movement - strong buying pressure`);
+                } else {
+                    riskFactors.push(`High volume (${(volumeRatio * 100).toFixed(0)}% above avg) with ${dailyReturn}% price movement - strong selling pressure`);
+                }
+            } else if (volumeRatio < 0.5) {
+                analysis.push(`Volume ${(volumeRatio * 100).toFixed(0)}% below average - weak interest`);
+                riskFactors.push(`Low volume (${(volumeRatio * 100).toFixed(0)}% below avg) may indicate lack of conviction`);
+            } else {
+                analysis.push(`Volume ${(volumeRatio * 100).toFixed(0)}% of average - normal trading activity`);
+            }
+
+            // Trend Strength Analysis
+            const priceChange20d = ((latest.close - data[data.length - 21].close) / data[data.length - 21].close * 100).toFixed(2);
+            const priceChange50d = ((latest.close - data[data.length - 51].close) / data[data.length - 51].close * 100).toFixed(2);
+            quantitativeMetrics.price_change_20d = parseFloat(priceChange20d);
+            quantitativeMetrics.price_change_50d = parseFloat(priceChange50d);
+            
+            if (parseFloat(priceChange20d) > 10) {
+                analysis.push(`Strong 20-day performance: +${priceChange20d}% - momentum building`);
+                opportunities.push(`Recent +${priceChange20d}% performance may indicate continued upward trend`);
+            } else if (parseFloat(priceChange20d) < -10) {
+                analysis.push(`Weak 20-day performance: ${priceChange20d}% - momentum declining`);
+                riskFactors.push(`Recent ${priceChange20d}% performance may indicate continued downward trend`);
+            } else {
+                analysis.push(`Moderate 20-day performance: ${priceChange20d}% - neutral momentum`);
+            }
+
+            if (parseFloat(priceChange50d) > 20) {
+                analysis.push(`Excellent 50-day performance: +${priceChange50d}% - long-term uptrend`);
+                opportunities.push(`Strong +${priceChange50d}% long-term performance suggests quality investment`);
+            } else if (parseFloat(priceChange50d) < -20) {
+                analysis.push(`Poor 50-day performance: ${priceChange50d}% - long-term downtrend`);
+                riskFactors.push(`Weak ${priceChange50d}% long-term performance raises concerns about fundamentals`);
+            } else {
+                analysis.push(`Moderate 50-day performance: ${priceChange50d}% - stable long-term trend`);
+            }
+
+                    // Update prediction display
+                    const predictionDiv = document.getElementById('prediction');
+                    predictionDiv.className = `prediction ${prediction}`;
+                    
+                    let signalText = '';
+                    let confidenceText = '';
+                    let recapText = '';
+                    
+                    if (prediction === 'buy') {
+                        signalText = 'BUY';
+                        confidenceText = `Confidence: ${confidence.toUpperCase()} (${probability}%)`;
+                        recapText = `Strong technical indicators suggest upward momentum. RSI ${quantitativeMetrics.rsi} and price ${quantitativeMetrics.price_vs_ma20}% above 20-day average support buying pressure.`;
+                    } else if (prediction === 'sell') {
+                        signalText = 'SELL';
+                        confidenceText = `Confidence: ${confidence.toUpperCase()} (${probability}%)`;
+                        recapText = `Technical analysis indicates downward pressure. RSI ${quantitativeMetrics.rsi} and price ${quantitativeMetrics.price_vs_ma20}% below 20-day average suggest selling pressure.`;
+                    } else {
+                        signalText = 'HOLD';
+                        confidenceText = `Confidence: ${confidence.toUpperCase()} (${probability}%)`;
+                        recapText = `Mixed signals detected. RSI ${quantitativeMetrics.rsi} in neutral zone with price ${quantitativeMetrics.price_vs_ma20}% vs 20-day average. Wait for clearer direction.`;
+                    }
+                    
+                    predictionDiv.innerHTML = `
+                        <div class="signal-text">${signalText}</div>
+                        <div class="confidence-level">${confidenceText}</div>
+                        <div class="signal-recap">${recapText}</div>
+                    `;
+
+            // Update technical analysis
             const techDiv = document.getElementById('technicalAnalysis');
-            
-            if (technical.error) {
-                techDiv.innerHTML = `<div class="error">Error: ${technical.error}</div>`;
-                return;
-            }
-
-            const indicators = technical.technical_indicators || {};
-            
             techDiv.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div><strong>Current Price:</strong> $${indicators.current_price?.toFixed(2) || 'N/A'}</div>
-                    <div><strong>Daily Return:</strong> ${(indicators.daily_return * 100)?.toFixed(2) || 'N/A'}%</div>
-                    <div><strong>RSI:</strong> ${indicators.rsi?.toFixed(1) || 'N/A'}</div>
-                    <div><strong>MACD:</strong> ${indicators.macd?.toFixed(3) || 'N/A'}</div>
-                    <div><strong>MA 20:</strong> $${indicators.ma_20?.toFixed(2) || 'N/A'}</div>
-                    <div><strong>MA 50:</strong> $${indicators.ma_50?.toFixed(2) || 'N/A'}</div>
-                    <div><strong>Volatility (20d):</strong> ${(indicators.volatility_20d * 100)?.toFixed(2) || 'N/A'}%</div>
-                    <div><strong>Volume:</strong> ${indicators.volume?.toLocaleString() || 'N/A'}</div>
+                <div class="stock-info">
+                    <h4>${currentTicker} - Current Status</h4>
+                    <div class="metric">
+                        <span class="metric-label">Current Price:</span>
+                        <span class="metric-value">$${latest.close.toFixed(2)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Daily Return:</span>
+                        <span class="metric-value" style="color: ${dailyReturn >= 0 ? '#00ff00' : '#ff0000'}">${dailyReturn}%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Volume:</span>
+                        <span class="metric-value">${latest.volume.toLocaleString()}</span>
+                    </div>
+                </div>
+                
+                <div class="stock-info">
+                    <h4>Technical Indicators</h4>
+                    <div class="metric">
+                        <span class="metric-label">RSI (14):</span>
+                        <span class="metric-value" style="color: ${rsi > 70 ? '#ff0000' : rsi < 30 ? '#00ff00' : '#ffff00'}">${rsi}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">MA 20:</span>
+                        <span class="metric-value">$${ma20.toFixed(2)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">MA 50:</span>
+                        <span class="metric-value">$${ma50.toFixed(2)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Volatility (20d):</span>
+                        <span class="metric-value">${volatility}%</span>
+                    </div>
+                </div>
+
+                <div class="stock-info">
+                    <h4>QUANTITATIVE ANALYSIS</h4>
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #ffffff; margin-bottom: 10px;">KEY METRICS:</h5>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>RSI (${quantitativeMetrics.rsi}):</strong><br>
+                                <small style="color: #cccccc;">Relative Strength Index - measures momentum. 0-30 = oversold (buy signal), 70-100 = overbought (sell signal)</small>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>Volatility (${quantitativeMetrics.volatility}%):</strong><br>
+                                <small style="color: #cccccc;">Price fluctuation measure. Higher = more risk but potential for bigger gains/losses</small>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>Volume Ratio (${quantitativeMetrics.volume_ratio}x):</strong><br>
+                                <small style="color: #cccccc;">Current volume vs 20-day average. >1.5x = high interest, <0.5x = low interest</small>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>20d Change (${quantitativeMetrics.price_change_20d}%):</strong><br>
+                                <small style="color: #cccccc;">Price change over last 20 days. Shows short-term momentum trend</small>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>50d Change (${quantitativeMetrics.price_change_50d}%):</strong><br>
+                                <small style="color: #cccccc;">Price change over last 50 days. Shows medium-term trend strength</small>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 5px;">
+                                <strong>vs MA20 (${quantitativeMetrics.price_vs_ma20}%):</strong><br>
+                                <small style="color: #cccccc;">Current price vs 20-day moving average. Positive = above trend, negative = below trend</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #ffffff; margin-bottom: 10px;">TECHNICAL INSIGHTS:</h5>
+                        <ul style="color: #ffffff; line-height: 1.6; margin-left: 20px;">
+                            ${analysis.map(insight => `<li>${insight}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    ${opportunities.length > 0 ? `
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #00ff00; margin-bottom: 10px;">BUY OPPORTUNITIES:</h5>
+                        <ul style="color: #ffffff; line-height: 1.6; margin-left: 20px;">
+                            ${opportunities.map(opp => `<li>${opp}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${riskFactors.length > 0 ? `
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #ff0000; margin-bottom: 10px;">SELL RISKS:</h5>
+                        <ul style="color: #ffffff; line-height: 1.6; margin-left: 20px;">
+                            ${riskFactors.map(risk => `<li>${risk}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #ffffff; margin-bottom: 10px;">INVESTMENT RECOMMENDATION:</h5>
+                        <p style="color: #ffffff; line-height: 1.6; font-weight: bold;">
+                            ${getInvestmentRecommendation(prediction, confidence, analysis, opportunities, riskFactors)}
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 10px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                        <p style="color: #888888; font-size: 0.8em; margin: 0;">
+                            This is not official financial advice
+                        </p>
+                    </div>
                 </div>
             `;
         }
 
+        // Generate investment recommendation
+        function getInvestmentRecommendation(prediction, confidence, analysis, opportunities, riskFactors) {
+            let recommendation = "";
+            let explanation = "";
+            
+            if (prediction === 'buy' && confidence === 'high') {
+                recommendation = `STRONG BUY: ${currentTicker} shows strong buy signals with high confidence.`;
+                explanation = `This recommendation is based on multiple technical indicators aligning in favor of upward price movement. `;
+                explanation += `The high confidence level indicates that the technical analysis shows clear bullish patterns. `;
+                explanation += `This suggests the stock may be undervalued or experiencing positive momentum that could lead to significant price appreciation. `;
+                if (opportunities.length > 0) {
+                    explanation += `Key supporting factors include: ${opportunities.slice(0, 2).join(', ')}. `;
+                }
+                explanation += `Consider entering a position with a stop-loss order to manage risk.`;
+            } else if (prediction === 'buy' && confidence === 'medium') {
+                recommendation = `BUY: ${currentTicker} shows buy signals with moderate confidence.`;
+                explanation = `The technical analysis suggests a favorable buying opportunity, though with some uncertainty. `;
+                explanation += `This moderate confidence level indicates mixed signals but with a bullish bias. `;
+                explanation += `Consider this as a potential buying opportunity with appropriate risk management and position sizing. `;
+                explanation += `Monitor the stock closely and be prepared to adjust your position based on new information.`;
+            } else if (prediction === 'sell' && confidence === 'high') {
+                recommendation = `STRONG SELL: ${currentTicker} shows strong sell signals with high confidence.`;
+                explanation = `Multiple technical indicators are pointing to significant downside risk. `;
+                explanation += `The high confidence level suggests that the technical analysis shows clear bearish patterns. `;
+                explanation += `This indicates the stock may be overvalued or experiencing negative momentum that could lead to substantial price decline. `;
+                if (riskFactors.length > 0) {
+                    explanation += `Key risk factors include: ${riskFactors.slice(0, 2).join(', ')}. `;
+                }
+                explanation += `Consider reducing your position size or exiting entirely to protect your capital.`;
+            } else if (prediction === 'sell' && confidence === 'medium') {
+                recommendation = `SELL: ${currentTicker} shows sell signals with moderate confidence.`;
+                explanation = `The technical analysis suggests caution with a bearish bias, though with some uncertainty. `;
+                explanation += `This moderate confidence level indicates mixed signals but with a negative bias. `;
+                explanation += `Consider reducing position size or implementing a stop-loss order to limit potential losses. `;
+                explanation += `Monitor the situation closely and be prepared to exit if conditions worsen.`;
+            } else {
+                recommendation = `HOLD: ${currentTicker} shows mixed signals with neutral outlook.`;
+                explanation = `The technical indicators are inconclusive and show conflicting signals. `;
+                explanation += `This neutral stance suggests that neither strong buying nor selling pressure is evident. `;
+                explanation += `In such cases, it's often best to wait for clearer directional signals before making significant position changes. `;
+                explanation += `Consider maintaining your current position size while monitoring for new developments.`;
+            }
+            
+            // Add risk management advice
+            if (riskFactors.length > 2) {
+                explanation += ` CAUTION: Multiple risk factors have been identified - consider smaller position sizes or avoiding this investment entirely.`;
+            }
+            
+            if (opportunities.length > 2) {
+                explanation += ` OPPORTUNITY: Multiple positive factors have been identified - this could support a larger position size if you have high risk tolerance.`;
+            }
+            
+            return `${recommendation} ${explanation}`;
+        }
+
         // Show loading state
         function showLoading() {
-            document.getElementById('prediction').innerHTML = '<p class="loading">Analyzing stock...</p>';
-            document.getElementById('technicalAnalysis').innerHTML = '<p class="loading">Loading technical analysis...</p>';
+            document.getElementById('prediction').innerHTML = '<p class="loading">Analyzing stock trends...</p>';
+            document.getElementById('technicalAnalysis').innerHTML = '<p class="loading">Loading comprehensive analysis...</p>';
         }
 
         // Show error message
@@ -313,8 +1174,9 @@
         });
 
         // Load some sample data on page load
+        
         window.onload = function() {
-            loadTickers();
+            // App starts with start screen, no auto-loading
         };
     </script>
 </body>

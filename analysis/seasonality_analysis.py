@@ -154,8 +154,19 @@ class SeasonalityAnalyzer:
         other_days = []
         
         for date, row in self.data.iterrows():
-            last_day_of_month = calendar.monthrange(date.year, date.month)[1]
-            if date.day >= last_day_of_month - 2:  # Last 3 days
+            # Handle both datetime and date objects
+            if hasattr(date, 'year') and hasattr(date, 'month') and hasattr(date, 'day'):
+                year, month, day = date.year, date.month, date.day
+            else:
+                # If it's a string or other format, try to parse it
+                try:
+                    parsed_date = pd.to_datetime(date)
+                    year, month, day = parsed_date.year, parsed_date.month, parsed_date.day
+                except:
+                    continue
+            
+            last_day_of_month = calendar.monthrange(year, month)[1]
+            if day >= last_day_of_month - 2:  # Last 3 days
                 month_end_days.append(row['Daily_Return'])
             else:
                 other_days.append(row['Daily_Return'])
