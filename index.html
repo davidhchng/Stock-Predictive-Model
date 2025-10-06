@@ -58,14 +58,115 @@
             }
         }
         
+        /* Start Screen Styles */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        .start-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .logo-icon {
+            font-size: 0.8em;
+            font-weight: 900;
+            color: #00ff00;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            padding: 8px 12px;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        
+        .start-subtitle {
+            font-size: 1.5em;
+            color: #cccccc;
+            margin-bottom: 20px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+        }
+        
+        .start-motto {
+            font-size: 1.1em;
+            color: #00ff00;
+            margin-bottom: 40px;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .start-button {
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 900;
+            font-family: 'Orbitron', 'Arial Black', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.3);
+        }
+        
+        .start-button:hover {
+            background: linear-gradient(135deg, #00cc00 0%, #00aa00 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 255, 0, 0.4);
+        }
+        
+        .main-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .main-content.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .header {
             text-align: center;
-            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-            color: #000;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffffff;
             padding: 30px;
             border-radius: 20px;
             margin-bottom: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .header h1 {
@@ -73,12 +174,14 @@
             margin: 0;
             font-weight: 900;
             font-family: 'Orbitron', 'Arial Black', sans-serif;
+            color: #ffffff;
         }
         
         .header p {
             font-size: 1.2em;
             margin: 10px 0 0 0;
             font-weight: 400;
+            color: #cccccc;
         }
         
         .container {
@@ -356,10 +459,23 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>STOCK KING</h1>
-        <p>S&P 500 Analysis & Trading Signals</p>
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-logo">
+            <div class="logo-icon">SK</div>
+            STOCK KING
+        </div>
+        <div class="start-subtitle">S&P 500 Analysis & Trading Signals</div>
+        <div class="start-motto">From newbie to veteran: Investing insights made easy.</div>
+        <button class="start-button" onclick="startApp()">START TRADING</button>
     </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="header">
+            <h1>STOCK KING</h1>
+            <p>S&P 500 Analysis & Trading Signals</p>
+        </div>
 
     <div class="container">
         <div class="card">
@@ -409,8 +525,9 @@
         <div id="analysis"></div>
     </div>
 
-    <div class="disclaimer">
-        This is not official financial advice
+        <div class="disclaimer">
+            This is not official financial advice
+        </div>
     </div>
 
     <script>
@@ -419,6 +536,11 @@
         let currentTicker = null;
         let currentData = null;
         let currentPeriod = 'all';
+
+        function startApp() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('mainContent').classList.add('visible');
+        }
 
         async function searchStock(ticker = null) {
             if (!ticker) {
@@ -619,9 +741,11 @@
             const prices = [];
             const volumes = [];
             
-            // Generate 30 days of data based on real price
+            // Generate data based on current period
+            const daysToGenerate = getDaysForPeriod(currentPeriod);
             const basePrice = data.price;
-            for (let i = 29; i >= 0; i--) {
+            
+            for (let i = daysToGenerate - 1; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 dates.push(date.toISOString().split('T')[0]);
@@ -632,7 +756,8 @@
                 volumes.push(Math.floor(Math.random() * 10000000 + 1000000));
             }
             
-            updateChart({dates, prices, volumes}, ticker);
+            currentData = {dates, prices, volumes};
+            updateChart(currentData, ticker);
         }
 
         function generateDemoChart(ticker) {
@@ -640,8 +765,10 @@
             const prices = [];
             const volumes = [];
             
-            // Generate 30 days of demo data
-            for (let i = 29; i >= 0; i--) {
+            // Generate data based on current period
+            const daysToGenerate = getDaysForPeriod(currentPeriod);
+            
+            for (let i = daysToGenerate - 1; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 dates.push(date.toISOString().split('T')[0]);
@@ -653,7 +780,20 @@
                 volumes.push(Math.floor(Math.random() * 10000000 + 1000000));
             }
             
-            updateChart({dates, prices, volumes}, ticker);
+            currentData = {dates, prices, volumes};
+            updateChart(currentData, ticker);
+        }
+
+        function getDaysForPeriod(period) {
+            switch(period) {
+                case '1d': return 1;
+                case '5d': return 5;
+                case '1m': return 30;
+                case '3m': return 90;
+                case '1y': return 365;
+                case 'all': return 365;
+                default: return 30;
+            }
         }
 
         function updateChart(data, ticker) {
@@ -719,8 +859,11 @@
             });
             event.target.classList.add('active');
             
-            if (currentData) {
-                updateChart(currentData, currentTicker);
+            if (currentTicker) {
+                // Regenerate chart with new period
+                if (currentData) {
+                    generateDemoChart(currentTicker);
+                }
             }
         }
 
