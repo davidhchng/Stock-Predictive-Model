@@ -639,7 +639,10 @@
                 showError(`Error analyzing ${ticker}: ${error.message}`);
             }
         }
-        const API_BASE = 'http://localhost:8000';
+        // Auto-detect API URL for production
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8000' 
+            : window.location.origin;
         let currentTicker = null;
         let currentData = null;
         let currentPeriod = 'all';
