@@ -467,7 +467,7 @@
         </div>
         <div class="start-subtitle">S&P 500 Analysis & Trading Signals</div>
         <div class="start-motto">From newbie to veteran: Investing insights made easy.</div>
-        <button class="start-button" onclick="startApp()">START TRADING</button>
+        <button class="start-button" onclick="startApp()" id="startBtn">START TRADING</button>
     </div>
 
     <!-- Main Content -->
@@ -582,8 +582,17 @@
         let currentPeriod = 'all';
 
         function startApp() {
-            document.getElementById('startScreen').style.display = 'none';
-            document.getElementById('mainContent').classList.add('visible');
+            console.log('Start button clicked!');
+            const startScreen = document.getElementById('startScreen');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (startScreen && mainContent) {
+                startScreen.style.display = 'none';
+                mainContent.classList.add('visible');
+                console.log('App started successfully!');
+            } else {
+                console.error('Could not find startScreen or mainContent elements');
+            }
         }
 
         async function searchStock(ticker = null) {
@@ -1070,6 +1079,8 @@
 
         // Initialize chart when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
             // Add click listeners to time period buttons
             document.querySelectorAll('.time-period-btn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -1077,6 +1088,17 @@
                     updateChartZoom(period);
                 });
             });
+            
+            // Add backup event listener for start button
+            const startBtn = document.getElementById('startBtn');
+            if (startBtn) {
+                startBtn.addEventListener('click', function() {
+                    console.log('Start button clicked via event listener');
+                    startApp();
+                });
+            } else {
+                console.error('Start button not found!');
+            }
         });
 
         function updateChartZoom(period) {
