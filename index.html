@@ -530,27 +530,27 @@
         <div id="explanations" style="color: #cccccc; line-height: 1.6;">
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #00ff00; margin-bottom: 10px;">RSI (Relative Strength Index)</h4>
-                <p>Measures momentum on a scale of 0-100. Values above 70 indicate overbought conditions (potential sell signal), while values below 30 indicate oversold conditions (potential buy signal). Values between 30-70 are considered neutral.</p>
+                <p>Measures momentum on a scale of 0-100. <strong>Current RSI vs. Average (50):</strong> If RSI > 70, the stock is overbought (potential SELL signal - price may drop soon). If RSI < 30, the stock is oversold (potential BUY signal - price may rise soon). RSI between 30-70 is neutral. The further from 50, the stronger the signal.</p>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #00ff00; margin-bottom: 10px;">Volatility</h4>
-                <p>Shows how much the stock price fluctuates. High volatility (>30%) means the stock is risky but potentially profitable. Low volatility (<15%) means the stock is stable but may have limited growth potential.</p>
+                <p>Shows how much the stock price fluctuates compared to its average. <strong>Current Volatility vs. Market Average (15-20%):</strong> High volatility (>25%) means big price swings - higher risk but higher potential returns (BUY if you can handle risk). Low volatility (<10%) means stable prices - safer but lower potential returns (HOLD for stability).</p>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #00ff00; margin-bottom: 10px;">Volume Ratio</h4>
-                <p>Compares current trading volume to average volume. Values above 1.5x indicate high activity (strong interest), while values below 0.5x indicate low activity (weak interest). High volume often confirms price movements.</p>
+                <p>Compares current trading volume to the stock's average volume. <strong>Current Volume vs. Average (1.0):</strong> Volume > 1.5 means high interest - could signal important news or trend change (BUY if price is rising, SELL if falling). Volume < 0.5 means low interest - wait for more activity (HOLD).</p>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #00ff00; margin-bottom: 10px;">Moving Averages (MA20, MA50)</h4>
-                <p>Shows average price over 20 or 50 days. When current price is above the moving average, it indicates an upward trend. When below, it indicates a downward trend. The percentage shows how far above/below the average the current price is.</p>
+                <p>Shows average price over different periods. <strong>Current Price vs. 20-day Average:</strong> Price above average = upward trend (BUY signal). Price below average = downward trend (SELL signal). <strong>20-day vs. 50-day Average:</strong> 20-day above 50-day = short-term strength (BUY). 20-day below 50-day = short-term weakness (SELL).</p>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h4 style="color: #00ff00; margin-bottom: 10px;">Period Changes</h4>
-                <p>Shows price change over 20 or 50 days. Positive values indicate the stock has gained value over that period, while negative values indicate losses. This helps identify longer-term trends beyond daily fluctuations.</p>
+                <p>Shows price change over specific periods. <strong>20-day Change vs. 0%:</strong> Positive change = recent strength (BUY if other indicators agree). Negative change = recent weakness (SELL if other indicators agree). <strong>50-day Change:</strong> Shows longer-term trend - use to confirm short-term signals.</p>
             </div>
             
             <div>
@@ -596,9 +596,6 @@
                 return;
             }
             
-            // Set default period to all time for zooming functionality
-            currentPeriod = 'all';
-            
             // Update search input
             document.getElementById('searchInput').value = ticker;
             
@@ -607,17 +604,68 @@
             document.getElementById('analysis').innerHTML = '<div class="loading">Loading analysis...</div>';
             
             try {
-                // Try to get real data from Alpha Vantage
+                // Try to get real data
                 const data = await fetchRealStockData(ticker);
                 if (data) {
+                    chartData = data; // Store data for chart
+                    createChart(data, 'all'); // Show all time data initially
                     displayRealAnalysis(data, ticker);
                 } else {
                     throw new Error('No real data available');
                 }
             } catch (error) {
                 console.log('Using demo data for', ticker);
+                const demoData = generateDemoData(ticker);
+                chartData = demoData;
+                createChart(demoData, 'all');
                 displayDemoAnalysis(ticker);
             }
+        }
+
+        function generateDemoData(ticker) {
+            const dates = [];
+            const prices = [];
+            const volumes = [];
+            const opens = [];
+            const highs = [];
+            const lows = [];
+            
+            // Generate 2 years of data
+            const days = 730;
+            let basePrice = 150 + Math.random() * 100;
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]);
+                
+                const dailyChange = (Math.random() - 0.5) * 0.05;
+                basePrice = basePrice * (1 + dailyChange);
+                
+                const open = basePrice * (1 + (Math.random() - 0.5) * 0.02);
+                const high = Math.max(open, basePrice) * (1 + Math.random() * 0.03);
+                const low = Math.min(open, basePrice) * (1 - Math.random() * 0.03);
+                
+                opens.push(open);
+                highs.push(high);
+                lows.push(low);
+                prices.push(basePrice);
+                
+                const volume = Math.floor(2000000 + Math.random() * 5000000);
+                volumes.push(volume);
+            }
+            
+            return {
+                ticker: ticker,
+                dates: dates,
+                prices: prices,
+                volumes: volumes,
+                opens: opens,
+                highs: highs,
+                lows: lows,
+                currentPrice: prices[prices.length - 1],
+                change: ((prices[prices.length - 1] - prices[0]) / prices[0] * 100).toFixed(2)
+            };
         }
 
         async function fetchRealStockData(ticker) {
@@ -1016,17 +1064,22 @@
             Plotly.newPlot('chart', [trace1, trace2], layout);
         }
 
-        // Add event listeners to time period buttons
+        // Chart functionality - completely recreated
+        let chartData = null;
+        let currentPeriod = 'all';
+
+        // Initialize chart when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Add click listeners to time period buttons
             document.querySelectorAll('.time-period-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const period = this.getAttribute('data-period');
-                    updateChartPeriod(period);
+                    updateChartZoom(period);
                 });
             });
         });
 
-        function updateChartPeriod(period) {
+        function updateChartZoom(period) {
             currentPeriod = period;
             
             // Update active button
@@ -1035,59 +1088,102 @@
             });
             event.target.classList.add('active');
             
-            if (currentData && currentTicker) {
-                // Filter the existing data instead of fetching new data
-                const filteredData = filterDataByPeriod(currentData, period);
-                updateChart(filteredData, currentTicker);
+            if (chartData) {
+                createChart(chartData, period);
             }
         }
 
-        function filterDataByPeriod(data, period) {
-            if (!data || !data.dates || data.dates.length === 0) return data;
+        function createChart(data, period = 'all') {
+            if (!data || !data.dates || data.dates.length === 0) return;
             
-            const now = new Date();
-            let daysToKeep = 0;
-            
-            switch(period) {
-                case '1d':
-                    daysToKeep = 1;
-                    break;
-                case '5d':
-                    daysToKeep = 5;
-                    break;
-                case '1m':
-                    daysToKeep = 30;
-                    break;
-                case '3m':
-                    daysToKeep = 90;
-                    break;
-                case '1y':
-                    daysToKeep = 365;
-                    break;
-                case 'all':
-                default:
-                    return data; // Return all data
+            // Filter data based on period
+            let filteredData = data;
+            if (period !== 'all') {
+                const days = getDaysForPeriod(period);
+                const startIndex = Math.max(0, data.dates.length - days);
+                filteredData = {
+                    dates: data.dates.slice(startIndex),
+                    prices: data.prices.slice(startIndex),
+                    volumes: data.volumes.slice(startIndex),
+                    opens: data.opens.slice(startIndex),
+                    highs: data.highs.slice(startIndex),
+                    lows: data.lows.slice(startIndex)
+                };
             }
             
-            // Sort data by date (most recent first) and take the last N days
-            const sortedIndices = data.dates
-                .map((date, index) => ({ date: new Date(date), index }))
-                .sort((a, b) => b.date - a.date)
-                .slice(0, daysToKeep)
-                .map(item => item.index)
-                .reverse(); // Reverse to maintain chronological order
-            
-            return {
-                ticker: data.ticker,
-                dates: sortedIndices.map(i => data.dates[i]),
-                prices: sortedIndices.map(i => data.prices[i]),
-                volumes: sortedIndices.map(i => data.volumes[i]),
-                opens: sortedIndices.map(i => data.opens[i]),
-                highs: sortedIndices.map(i => data.highs[i]),
-                lows: sortedIndices.map(i => data.lows[i]),
-                currentPrice: data.currentPrice,
-                change: data.change
+            // Create price trace
+            const priceTrace = {
+                x: filteredData.dates,
+                y: filteredData.prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Price',
+                line: {
+                    color: '#00ff00',
+                    width: 3
+                },
+                hovertemplate: '<b>%{x}</b><br>Price: $%{y:.2f}<extra></extra>'
             };
+            
+            // Create volume trace
+            const volumeTrace = {
+                x: filteredData.dates,
+                y: filteredData.volumes,
+                type: 'bar',
+                name: 'Volume',
+                yaxis: 'y2',
+                marker: {
+                    color: 'rgba(0, 255, 0, 0.3)'
+                },
+                hovertemplate: '<b>%{x}</b><br>Volume: %{y:,.0f}<extra></extra>'
+            };
+            
+            const layout = {
+                title: {
+                    text: `${data.ticker || 'Stock'} Price Chart`,
+                    font: { color: '#ffffff', size: 18 }
+                },
+                xaxis: {
+                    color: '#ffffff',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    title: 'Date'
+                },
+                yaxis: {
+                    color: '#ffffff',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    title: 'Price ($)'
+                },
+                yaxis2: {
+                    color: '#ffffff',
+                    gridcolor: 'rgba(255, 255, 255, 0.1)',
+                    title: 'Volume',
+                    overlaying: 'y',
+                    side: 'right'
+                },
+                plot_bgcolor: 'rgba(0, 0, 0, 0.1)',
+                paper_bgcolor: 'rgba(0, 0, 0, 0.1)',
+                font: { color: '#ffffff' },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(0, 0, 0, 0.5)',
+                    bordercolor: 'rgba(255, 255, 255, 0.3)'
+                }
+            };
+            
+            Plotly.newPlot('chart', [priceTrace, volumeTrace], layout, {responsive: true});
+        }
+
+        function getDaysForPeriod(period) {
+            switch(period) {
+                case '1d': return 1;
+                case '5d': return 5;
+                case '1m': return 30;
+                case '3m': return 90;
+                case '1y': return 365;
+                case 'all': return 9999;
+                default: return 30;
+            }
         }
 
         // Allow Enter key to search
