@@ -559,23 +559,11 @@
             </div>
             
             <div style="margin-top: 30px; padding: 20px; background: rgba(0, 255, 0, 0.1); border-radius: 10px; border: 1px solid rgba(0, 255, 0, 0.3);">
-                <h4 style="color: #00ff00; margin-bottom: 15px; text-align: center;">📊 BUY/SELL/HOLD DECISION SUMMARY</h4>
+                <h4 style="color: #00ff00; margin-bottom: 15px; text-align: center;">INVESTMENT RECOMMENDATION SUMMARY</h4>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                    <div style="text-align: center; padding: 15px; background: rgba(0, 255, 0, 0.2); border-radius: 8px;">
-                        <h5 style="color: #00ff00; margin-bottom: 10px;">🟢 STRONG BUY</h5>
-                        <p style="font-size: 0.9em;">• RSI < 30 (Oversold)<br>• Positive momentum<br>• Above moving averages<br>• High volume activity</p>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 15px; background: rgba(255, 0, 0, 0.2); border-radius: 8px;">
-                        <h5 style="color: #ff0000; margin-bottom: 10px;">🔴 STRONG SELL</h5>
-                        <p style="font-size: 0.9em;">• RSI > 70 (Overbought)<br>• Negative momentum<br>• Below moving averages<br>• High volume activity</p>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 15px; background: rgba(255, 255, 0, 0.2); border-radius: 8px;">
-                        <h5 style="color: #ffff00; margin-bottom: 10px;">🟡 HOLD</h5>
-                        <p style="font-size: 0.9em;">• RSI 30-70 (Neutral)<br>• Mixed signals<br>• Near moving averages<br>• Wait for clarity</p>
-                    </div>
+                <div style="text-align: center; padding: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; margin-bottom: 15px;">
+                    <h5 style="color: #ffffff; margin-bottom: 10px;">CURRENT RECOMMENDATION</h5>
+                    <p style="font-size: 1.1em; color: #cccccc;">The recommendation above is based on a combination of technical indicators including RSI levels, price momentum, moving average positions, and volume activity. This analysis provides a data-driven approach to understanding market conditions, but should always be combined with your own research and risk tolerance.</p>
                 </div>
                 
                 <div style="text-align: center; font-style: italic; color: #cccccc;">
@@ -1070,8 +1058,16 @@
                 document.getElementById('prediction').innerHTML = '<div class="loading">Updating chart...</div>';
                 document.getElementById('analysis').innerHTML = '<div class="loading">Loading analysis...</div>';
                 
-                // Re-fetch data with new period
-                searchStock(currentTicker);
+                // Re-fetch data with new period and update chart immediately
+                fetchRealStockData(currentTicker).then(data => {
+                    if (data) {
+                        currentData = data;
+                        updateChart(data, currentTicker);
+                        displayRealAnalysis(data, currentTicker);
+                    } else {
+                        generateDemoChart(currentTicker);
+                    }
+                });
             }
         }
 
