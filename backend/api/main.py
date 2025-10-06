@@ -88,6 +88,29 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
+@app.post("/init-database")
+async def init_database():
+    """Initialize database with S&P 500 data"""
+    try:
+        from backend.scrapers.data_collector import DataCollector
+        from backend.database.database_manager import DatabaseManager
+        
+        # Initialize database
+        db_manager = DatabaseManager()
+        
+        # Collect S&P 500 data
+        collector = DataCollector()
+        result = collector.collect_all_data()
+        
+        return {
+            "status": "success", 
+            "message": "Database initialized successfully",
+            "tickers_added": result.get("tickers_added", 0),
+            "stocks_processed": result.get("stocks_processed", 0)
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Database initialization failed: {str(e)}"}
+
 # Ticker endpoints
 @app.get("/tickers", response_model=List[TickerResponse])
 async def get_tickers():
