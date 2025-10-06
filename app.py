@@ -48,7 +48,7 @@ def init_database_on_startup():
         if len(tickers) == 0:
             print("📊 No data found, collecting S&P 500 data...")
             collector = DataCollector()
-            result = collector.collect_all_data()
+            result = collector.full_data_collection()
             print(f"✅ Database initialized! Processed {result.get('stocks_processed', 0)} stocks")
         else:
             print(f"✅ Database already has {len(tickers)} tickers")

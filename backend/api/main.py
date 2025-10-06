@@ -100,7 +100,7 @@ async def init_database():
         
         # Collect S&P 500 data
         collector = DataCollector()
-        result = collector.collect_all_data()
+        result = collector.full_data_collection()
         
         return {
             "status": "success", 
